@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-12-10
+
+### Added
+
+- **Context-Efficient Architecture**: Reduced registered MCP tools from 12 to 4, cutting initial context consumption by 67%
+  - 4 bootstrap tools: `switch_project`, `search_tools`, `execute_tool`, `execute_ruby`
+  - 9 internal analyzers invoked via `execute_tool` meta-dispatcher
+  - Tools are now discovered on-demand rather than loaded upfront
+- **Sandboxed Ruby Execution** (`execute_ruby`): Secure code execution in Rails context
+  - File/network/system call restrictions
+  - Sensitive file protection (.env, credentials, .gitignore'd files)
+  - Helper methods: `read_file`, `file_exists?`, `list_files`, `project_root`
+- **Interactive Configuration Tool** (`rails-mcp-config`): New TUI for project management
+  - Project management with validation
+  - Guide downloading with progress indicators
+  - Claude Desktop auto-configuration (STDIO/HTTP modes)
+  - Gum-enhanced UI with terminal fallback
+- **Claude Code Integration**: Added CLAUDE.md, .claudeignore, and .claude/ configuration
+- **Agent Documentation**: New docs/AGENT.md comprehensive AI agent guide
+
+### Changed
+
+- **Architecture Refactor**: Separation of tools/ (FastMCP) vs analyzers/ (plain Ruby classes)
+  - New `lib/rails-mcp-server/analyzers/` directory with `RailsMcpServer::Analyzers` namespace
+  - Removed deprecated extensions (resource_templating, server_templating)
+- **Rails Introspection** (replaces regex parsing):
+  - `Model.reflect_on_all_associations` for accurate association data
+  - `Model.validators` with conditions and options
+  - `Controller.action_methods` instead of scanning for `def`
+  - `Rails.application.routes.routes` for direct route access
+  - `_process_action_callbacks` for before/after actions
+- **Prism Static Analysis**: AST-based code inspection for callbacks, scopes, concerns
+  - Method definitions with line numbers
+  - Instance variables per controller action
+  - New `analysis_type` parameter: introspection | static | full
+
+### Improved
+
+- **Output Optimization**: New `detail_level` parameter (names | summary | full)
+- **Route Filtering**: Filter by controller, verb, or path
+- **Batch Operations**: Support for analyzing multiple models and schemas at once
+- **Quick Start Guide**: Shown after `switch_project` for better onboarding
+- **execute_ruby Hints**: Improved feedback for missing puts statements
+
+### Fixed
+
+- **get_routes**: Fixed method definition order bug
+
+### Technical
+
+- Test suite with 32 tests covering analyzers and tools
+- Test fixtures with sample Rails project structure
+
 ## [1.2.3] - 2025-12-10
 
 ### Fixed
@@ -201,6 +254,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **v1.4.0** (2025-12-10): Context-efficient architecture with progressive tool discovery (67% token reduction)
 - **v1.2.3** (2025-12-10): Setup script fix for readonly filesystems (NixOS compatibility)
 - **v1.2.2** (2025-07-21): Network access support with --bind-all flag
 - **v1.2.1** (2025-06-09): Bug fixes for STDIO output and tool naming
