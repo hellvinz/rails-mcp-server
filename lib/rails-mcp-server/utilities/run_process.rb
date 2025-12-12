@@ -8,11 +8,19 @@ module RailsMcpServer
 
       Bundler.with_unbundled_env do
         subprocess_env = ENV.to_h
-        subprocess_env.delete("RBENV_VERSION")
         subprocess_env.delete("BUNDLE_GEMFILE")
 
-        shell_command = "cd #{Shellwords.escape(project_path)} && rbenv exec #{command}"
-        stdout_str, stderr_str, status = Open3.capture3(subprocess_env, "/bin/sh", "-c", shell_command)
+        # Set RBENV_VERSION from project's .ruby-version if it exists
+        ruby_version_file = File.join(project_path, ".ruby-version")
+        if File.exist?(ruby_version_file)
+          subprocess_env["RBENV_VERSION"] = File.read(ruby_version_file).strip
+        else
+          subprocess_env.delete("RBENV_VERSION")
+        end
+
+        shell = ENV.fetch("SHELL", "/bin/bash")
+        shell_command = "cd #{Shellwords.escape(project_path)} && #{command}"
+        stdout_str, stderr_str, status = Open3.capture3(subprocess_env, shell, "-l", "-c", shell_command)
 
         if status.success?
           RailsMcpServer.log(:debug, "Command succeeded")
